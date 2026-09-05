@@ -11,6 +11,7 @@
 		NOTICE,
 		ACCOUNTS,
 		PHOTOS,
+		INTRO_TITLE,
 		FULLSCREEN_QUOTE,
 		CLOSING_QUOTE
 	} from '$lib/data';
@@ -19,6 +20,8 @@
 	import GuestbookPopup from '$lib/GuestbookPopup.svelte';
 	import GuestbookViewPopup from '$lib/GuestbookViewPopup.svelte';
 
+	let introOpen = $state(true);
+	let introClosing = $state(false);
 	let contactOpen = $state(false);
 	let gbWriteOpen = $state(false);
 	let gbViewOpen = $state(false);
@@ -116,10 +119,27 @@
 		else await copy(location.href, '링크');
 	}
 
+	function closeIntro() {
+		if (!introOpen || introClosing) return;
+		introClosing = true;
+		setTimeout(() => {
+			introOpen = false;
+			introClosing = false;
+		}, 500);
+	}
+
+	$effect(() => {
+		document.body.style.overflow = introOpen ? 'hidden' : '';
+		return () => {
+			document.body.style.overflow = '';
+		};
+	});
+
 	onMount(() => {
 		daysTogether = Math.floor((Date.now() - RELATIONSHIP_START.getTime()) / 86400000);
 		tickCountdown();
 		const timer = setInterval(tickCountdown, 1000);
+		const introTimer = setTimeout(closeIntro, 3200);
 
 		const obs = new IntersectionObserver(
 			(entries) => entries.forEach((e) => e.isIntersecting && e.target.classList.add('on')),
@@ -129,6 +149,7 @@
 
 		return () => {
 			clearInterval(timer);
+			clearTimeout(introTimer);
 			obs.disconnect();
 		};
 	});
@@ -138,13 +159,29 @@
 	<title>{COUPLE.groom.name} ♥ {COUPLE.bride.name}</title>
 </svelte:head>
 
+{#if introOpen}
+	<div class="intro" class:closing={introClosing}>
+		<img src={PHOTOS.cover} alt="" class="intro-img" />
+		<div class="intro-tint"></div>
+		<button class="intro-skip" onclick={closeIntro}>SKIP ↘</button>
+		<div class="intro-content">
+			<p class="intro-title">{INTRO_TITLE}</p>
+			<div class="intro-labels">
+				<span>WEDDING</span>
+				<span>INVITATION</span>
+			</div>
+		</div>
+	</div>
+{/if}
+
 <div class="wrap">
 	<!-- 1. COVER -->
 	<section class="cover">
 		<img src={PHOTOS.cover} alt="커버 사진" class="cover-img" />
-		<div class="cover-overlay fi">
+		<div class="cover-overlay">
+			<p class="cover-overline">Wedding Invitation</p>
 			<p class="cover-date">{WEDDING_DATE_DISPLAY}</p>
-			<p class="cover-names">{COUPLE.groom.name} · {COUPLE.bride.name}</p>
+			<p class="cover-names">{COUPLE.groom.name}<span class="cover-heart">♥</span>{COUPLE.bride.name}</p>
 		</div>
 	</section>
 
@@ -367,17 +404,125 @@
 </div>
 
 <style>
-	/* Cover */
-	.cover { position: relative; aspect-ratio: 4 / 5; overflow: hidden; }
-	.cover-img { width: 100%; height: 100%; object-fit: cover; }
+	/* Intro — 오프닝 화면 */
+	.intro {
+		position: fixed;
+		inset: 0;
+		z-index: 500;
+		overflow: hidden;
+		animation: intro-fade-in 0.3s ease;
+	}
+	.intro.closing {
+		animation: intro-fade-out 0.5s ease forwards;
+	}
+	@keyframes intro-fade-in {
+		from { opacity: 0; }
+	}
+	@keyframes intro-fade-out {
+		to { opacity: 0; }
+	}
+	.intro-img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		filter: grayscale(0.15) brightness(0.82);
+		transform: scale(1.06);
+		animation: intro-img-pan 4s ease-out forwards;
+	}
+	@keyframes intro-img-pan {
+		from { transform: scale(1.12); }
+		to { transform: scale(1.02); }
+	}
+	.intro-tint {
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.1) 45%, rgba(0, 0, 0, 0.6) 100%);
+	}
+	.intro-skip {
+		position: absolute;
+		top: 1.2rem;
+		right: 1.2rem;
+		background: rgba(0, 0, 0, 0.45);
+		color: #fff;
+		border: none;
+		border-radius: 20px;
+		padding: 0.45rem 1rem;
+		font-size: 12px;
+		letter-spacing: 0.05em;
+		cursor: pointer;
+	}
+	.intro-content {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		padding: 0 1.6rem 3rem;
+		opacity: 0;
+		transform: translateY(16px);
+		animation: intro-text-in 1s ease forwards;
+		animation-delay: 0.4s;
+	}
+	@keyframes intro-text-in {
+		to { opacity: 1; transform: none; }
+	}
+	.intro-title {
+		font-family: 'Playfair Display', serif;
+		font-weight: 700;
+		text-transform: uppercase;
+		font-size: clamp(2.6rem, 13vw, 3.6rem);
+		line-height: 1.08;
+		letter-spacing: 0.01em;
+		color: #fff;
+		white-space: pre-line;
+		margin: 0 0 1.6rem;
+	}
+	.intro-labels {
+		display: flex;
+		justify-content: space-between;
+		font-size: 12px;
+		letter-spacing: 0.22em;
+		color: rgba(255, 255, 255, 0.85);
+	}
+
+	/* Cover — 입장 애니메이션 */
+	.cover { position: relative; aspect-ratio: 4 / 5; overflow: hidden; background: #ddd; }
+	.cover-img {
+		width: 100%; height: 100%; object-fit: cover;
+		opacity: 0; transform: scale(1.08);
+		animation: cover-img-in 1.8s ease forwards;
+	}
 	.cover-overlay {
 		position: absolute; left: 0; right: 0; bottom: 0;
-		padding: 2rem 1.5rem;
-		background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent);
+		padding: 2.2rem 1.5rem;
+		background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent 75%);
 		color: #fff; text-align: center;
 	}
-	.cover-date { font-size: 13px; opacity: 0.85; margin: 0 0 0.3rem; }
-	.cover-names { font-size: 1.3rem; letter-spacing: 0.05em; margin: 0; }
+	.cover-overline,
+	.cover-date,
+	.cover-names {
+		opacity: 0;
+		transform: translateY(14px);
+		animation: cover-text-in 0.9s ease forwards;
+	}
+	.cover-overline {
+		font-family: 'Playfair Display', serif;
+		font-style: italic;
+		font-size: 13px;
+		letter-spacing: 0.12em;
+		color: rgba(255, 255, 255, 0.85);
+		margin: 0 0 0.6rem;
+		animation-delay: 0.5s;
+	}
+	.cover-date { font-size: 13px; margin: 0 0 0.35rem; animation-delay: 0.9s; }
+	.cover-names { font-size: 1.4rem; letter-spacing: 0.06em; margin: 0; animation-delay: 1.3s; }
+	.cover-heart { color: var(--pink); margin: 0 0.4em; font-size: 0.85em; }
+
+	@keyframes cover-img-in {
+		to { opacity: 1; transform: scale(1); }
+	}
+	@keyframes cover-text-in {
+		to { opacity: 1; transform: none; }
+	}
 
 	/* Invitation */
 	.inv-sec { text-align: center; }

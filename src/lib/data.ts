@@ -73,6 +73,8 @@ export const PHOTOS = {
 	]
 };
 
+export const INTRO_TITLE = 'TOGETHER\nFOREVER';
+
 export const FULLSCREEN_QUOTE = 'JOIN US\nAS WE BECOME ONE';
 
 export const CLOSING_QUOTE = {
