@@ -1,28 +1,35 @@
-// ─── 결혼식 정보 — 실제 정보로 교체하세요 ─────────────────────────
+// ─── 결혼식 정보 ─────────────────────────
 export const COUPLE = {
-	groom: { name: '최희준', father: '최ㅇㅇ', mother: 'ㅇ ㅇㅇ' },
-	bride: { name: '안혜정', father: '안ㅇㅇ', mother: 'ㅇ ㅇㅇ' }
+	groom: { name: '최희준', parent: '장동숙', relation: '장남' },
+	bride: { name: '안혜정', parent: '양진례', relation: '차녀' }
 };
 
-export const WEDDING_DATE = new Date('2027-05-15T12:00:00');
-export const WEDDING_DATE_DISPLAY = '2027년 5월 15일 토요일 낮 12시';
+export const WEDDING_DATE = new Date('2026-10-24T12:00:00');
+export const WEDDING_DATE_DISPLAY = '2026년 10월 24일 토요일 낮 12시';
 
 export const RELATIONSHIP_START = new Date('2022-01-01T00:00:00');
 
+export const INVITATION_BODY =
+	'서로 다른 길을 걸어온 두 사람이 좋은 만남을 통해\n이제 한 가정을 이루려 합니다.\n서로를 아끼고 감사하는 마음으로 살아가고자 하오니\n귀한 걸음 하시어 축복해 주시면 감사하겠습니다.';
+
+export const INVITATION_VERSE = {
+	body: '한 사랑이면 짜라겠으랴와 두 사랑이면 능히 대적하나니\n세 겹줄은 쉽게 끊어지지 아니하느니라',
+	source: '전도서 4:12'
+};
+
 export const VENUE = {
-	name: 'ㅇㅇ웨딩홀',
-	hall: 'ㅇㅇ홀, 3층',
-	address: '서울시 ㅇㅇ구 ㅇㅇ로 000',
-	tel: '02-000-0000',
-	naverMapUrl: 'https://map.naver.com/v5/search/ㅇㅇ웨딩홀',
-	tmapUrl: 'tmap://route?rGoName=ㅇㅇ웨딩홀',
-	kakaoNaviUrl: 'https://map.kakao.com/link/search/ㅇㅇ웨딩홀'
+	name: '부산동산교회',
+	hall: '',
+	address: '부산시 연제구 마곡천로 9',
+	tel: '051-866-3211',
+	naverMapUrl: 'https://map.naver.com/v5/search/부산동산교회',
+	tmapUrl: 'tmap://route?rGoName=부산동산교회',
+	kakaoNaviUrl: 'https://map.kakao.com/link/search/부산동산교회'
 };
 
 export const TRANSIT = [
-	{ title: '지하철', lines: ['ㅇㅇ선 ㅇㅇ역 ㅇ번 출구 도보 ㅇ분'] },
-	{ title: '버스', lines: ['간선버스 : 000, 000', '지선버스 : 0000'] },
-	{ title: '자가용', lines: ['ㅇㅇ웨딩홀 주차장 이용 (2시간 무료)'] }
+	{ title: '지하철', lines: ['물만골역(3호선) 1번 출구, 약 400m', '배산역(3호선) 5번 출구, 약 700m'] },
+	{ title: '버스', lines: ['5-1, 20, 51, 57, 62, 63, 131, 141 (신리삼거리 하차)'] }
 ];
 
 export const NOTICE = {
@@ -33,26 +40,22 @@ export const NOTICE = {
 export const CONTACTS = {
 	groom: [
 		{ label: '신랑', name: COUPLE.groom.name, tel: '010-0000-0000' },
-		{ label: '아버지', name: COUPLE.groom.father, tel: '010-0000-0000' },
-		{ label: '어머니', name: COUPLE.groom.mother, tel: '010-0000-0000' }
+		{ label: '혼주', name: COUPLE.groom.parent, tel: '010-0000-0000' }
 	],
 	bride: [
 		{ label: '신부', name: COUPLE.bride.name, tel: '010-0000-0000' },
-		{ label: '아버지', name: COUPLE.bride.father, tel: '010-0000-0000' },
-		{ label: '어머니', name: COUPLE.bride.mother, tel: '010-0000-0000' }
+		{ label: '혼주', name: COUPLE.bride.parent, tel: '010-0000-0000' }
 	]
 };
 
 export const ACCOUNTS = {
 	groom: [
 		{ label: `신랑 ${COUPLE.groom.name}`, bank: 'ㅇㅇ은행', num: '000-000-000000' },
-		{ label: `아버지 ${COUPLE.groom.father}`, bank: 'ㅇㅇ은행', num: '000-000-000000' },
-		{ label: `어머니 ${COUPLE.groom.mother}`, bank: 'ㅇㅇ은행', num: '000-000-000000' }
+		{ label: `혼주 ${COUPLE.groom.parent}`, bank: 'ㅇㅇ은행', num: '000-000-000000' }
 	],
 	bride: [
 		{ label: `신부 ${COUPLE.bride.name}`, bank: 'ㅇㅇ은행', num: '000-000-000000' },
-		{ label: `아버지 ${COUPLE.bride.father}`, bank: 'ㅇㅇ은행', num: '000-000-000000' },
-		{ label: `어머니 ${COUPLE.bride.mother}`, bank: 'ㅇㅇ은행', num: '000-000-000000' }
+		{ label: `혼주 ${COUPLE.bride.parent}`, bank: 'ㅇㅇ은행', num: '000-000-000000' }
 	]
 };
 

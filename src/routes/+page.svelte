@@ -6,6 +6,8 @@
 		WEDDING_DATE,
 		WEDDING_DATE_DISPLAY,
 		RELATIONSHIP_START,
+		INVITATION_BODY,
+		INVITATION_VERSE,
 		VENUE,
 		TRANSIT,
 		NOTICE,
@@ -188,23 +190,22 @@
 	<!-- 2. 인사말 -->
 	<section class="sec inv-sec">
 		<span class="lbl">INVITATION</span>
-		<p class="ko-title fi">소중한 분들을 초대합니다</p>
-		<p class="invite-body fi d1">
-			서로의 이야기를 들으며 웃고,<br />
-			함께의 내일을 꿈꾸게 되었습니다.<br /><br />
-			두 사람의 설레는 시작에<br />
-			소중한 분의 따뜻한 축복을 기다립니다.
+		<p class="ko-title fi">초대의 글</p>
+		<p class="invite-body fi d1">{INVITATION_BODY}</p>
+		<p class="invite-verse fi d1">
+			"{INVITATION_VERSE.body}"
+			<span class="invite-verse-source">({INVITATION_VERSE.source})</span>
 		</p>
 		<hr class="hr-sm fi d1" />
 		<div class="family-rows fi d2">
 			<div class="family-row">
-				<span class="person-name">{COUPLE.groom.father} · {COUPLE.groom.mother}</span>
-				<span class="parent-of">의 아들</span>
+				<span class="person-name">{COUPLE.groom.parent}</span>
+				<span class="parent-of">의 {COUPLE.groom.relation}</span>
 				<span class="person-name">{COUPLE.groom.name}</span>
 			</div>
 			<div class="family-row">
-				<span class="person-name">{COUPLE.bride.father} · {COUPLE.bride.mother}</span>
-				<span class="parent-of">의 딸</span>
+				<span class="person-name">{COUPLE.bride.parent}</span>
+				<span class="parent-of">의 {COUPLE.bride.relation}</span>
 				<span class="person-name">{COUPLE.bride.name}</span>
 			</div>
 		</div>
@@ -256,7 +257,7 @@
 
 		<div class="loc-info fi d1">
 			<p class="hall-name">{VENUE.name}</p>
-			<p class="loc-detail">{VENUE.hall}</p>
+			{#if VENUE.hall}<p class="loc-detail">{VENUE.hall}</p>{/if}
 			<p class="loc-address">{VENUE.address}</p>
 			<a href="tel:{VENUE.tel}" class="loc-tel">Tel. {VENUE.tel}</a>
 		</div>
@@ -388,7 +389,7 @@
 		<table class="save-table">
 			<tbody>
 				<tr><th>DATE</th><td>{WEDDING_DATE_DISPLAY}</td></tr>
-				<tr><th>LOCATION</th><td>{VENUE.name} {VENUE.hall}</td></tr>
+				<tr><th>LOCATION</th><td>{VENUE.name}{VENUE.hall ? ` ${VENUE.hall}` : ''}</td></tr>
 			</tbody>
 		</table>
 
@@ -527,7 +528,12 @@
 	/* Invitation */
 	.inv-sec { text-align: center; }
 	.ko-title { font-size: 20px; font-weight: 500; letter-spacing: 0.04em; margin: 0.5rem 0 1.6rem; }
-	.invite-body { font-size: 15px; line-height: 1.8; color: var(--sub); }
+	.invite-body { font-size: 15px; line-height: 1.8; color: var(--sub); white-space: pre-line; }
+	.invite-verse {
+		font-size: 13px; line-height: 1.9; color: var(--sub); font-style: italic;
+		white-space: pre-line; margin: 1.6rem 0 0; padding: 0 0.5rem;
+	}
+	.invite-verse-source { font-size: 12px; color: var(--muted); font-style: normal; margin-top: 0.4rem; }
 	.family-rows { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.6rem; color: var(--sub); }
 	.family-row { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
 	.person-name { font-weight: 500; color: var(--text); }
