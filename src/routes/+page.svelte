@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { slide } from 'svelte/transition';
+	import { base } from '$app/paths';
 	import {
 		COUPLE,
 		WEDDING_DATE,
@@ -249,7 +250,7 @@
 
 <audio
 	bind:this={audioEl}
-	src="/bgm.mp3"
+	src="{base}/bgm.mp3"
 	loop
 	preload="auto"
 	onplay={() => (musicPlaying = true)}
