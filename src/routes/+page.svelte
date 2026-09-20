@@ -5,9 +5,7 @@
 		COUPLE,
 		WEDDING_DATE,
 		WEDDING_DATE_DISPLAY,
-		RELATIONSHIP_START,
 		INVITATION_BODY,
-		INVITATION_VERSE,
 		VENUE,
 		TRANSIT,
 		NOTICE,
@@ -15,7 +13,8 @@
 		PHOTOS,
 		INTRO_TITLE,
 		FULLSCREEN_QUOTE,
-		CLOSING_QUOTE
+		CLOSING_QUOTE,
+		DAUM_ROUGHMAP
 	} from '$lib/data';
 	import { type Msg, fetchMsgs, writeMsg, deleteMsg } from '$lib/guestbook';
 	import ContactPopup from '$lib/ContactPopup.svelte';
@@ -32,13 +31,16 @@
 	let lbOpen = $state(false);
 	let lbIdx = $state(0);
 
+	let audioEl: HTMLAudioElement | undefined = $state();
+	let musicPlaying = $state(false);
+
 	let toastMsg = $state('');
 	let toastOn = $state(false);
 
 	let msgs = $state<Msg[]>([]);
+	let msgsLoading = $state(false);
 
 	let dLeft = $state({ d: 0, h: 0, m: 0, s: 0 });
-	let daysTogether = $state(0);
 
 	const calRows = buildCalendar(WEDDING_DATE.getFullYear(), WEDDING_DATE.getMonth());
 
@@ -92,16 +94,22 @@
 	}
 
 	async function loadMsgs() {
-		msgs = await fetchMsgs();
+		msgsLoading = true;
+		try {
+			msgs = await fetchMsgs();
+		} finally {
+			msgsLoading = false;
+		}
 	}
-	async function addMsg(name: string, text: string) {
-		await writeMsg(name, text);
+	async function addMsg(name: string, text: string, password: string) {
+		await writeMsg(name, text, password);
 		toast('메시지가 등록되었습니다 ♡');
 		await loadMsgs();
 	}
-	async function removeMsg(id: number) {
-		await deleteMsg(id);
-		await loadMsgs();
+	async function removeMsg(id: number, password: string): Promise<boolean> {
+		const ok = await deleteMsg(id, password);
+		if (ok) await loadMsgs();
+		return ok;
 	}
 
 	function openLb(i: number) {
@@ -121,7 +129,77 @@
 		else await copy(location.href, '링크');
 	}
 
+	function toggleMusic() {
+		if (!audioEl) return;
+		if (audioEl.paused) audioEl.play().catch(() => {});
+		else audioEl.pause();
+	}
+
+	function loadDaumRoughmap() {
+		const container = document.getElementById(DAUM_ROUGHMAP.containerId);
+		if (!container) return;
+
+		const daumWin = window as typeof window & { daum?: any };
+
+		const renderMap = () => {
+			const width = container.clientWidth || 320;
+			const height = Math.round(width * (360 / 640));
+			new daumWin.daum.roughmap.Lander({
+				timestamp: DAUM_ROUGHMAP.timestamp,
+				key: DAUM_ROUGHMAP.key,
+				mapWidth: String(width),
+				mapHeight: String(height)
+			}).render();
+		};
+
+		// roughmapLoader.js는 원래 document.write로 roughmapLander.js를 추가하는데,
+		// 스크립트를 동적으로(onMount에서) 넣으면 document.write가 무시되어 Lander가 정의되지 않는다.
+		// 그래서 로더가 세팅해둔 설정값으로 실제 렌더 스크립트 URL을 직접 만들어 불러온다.
+		const loadLanderScript = () => {
+			const rm = daumWin.daum.roughmap;
+			if (rm.Lander) {
+				renderMap();
+				return;
+			}
+			const landerId = 'daum-roughmap-lander';
+			const existingLander = document.getElementById(landerId);
+			if (existingLander) {
+				existingLander.addEventListener('load', renderMap);
+				return;
+			}
+			const landerScript = document.createElement('script');
+			landerScript.id = landerId;
+			landerScript.charset = 'UTF-8';
+			landerScript.src = `${rm.url_protocal}${rm.url_cdn_domain}/kakaomapweb/roughmap/place/${rm.phase}/${rm.cdn}/roughmapLander.js`;
+			landerScript.onload = renderMap;
+			document.head.appendChild(landerScript);
+		};
+
+		if (daumWin.daum?.roughmap?.Lander) {
+			renderMap();
+			return;
+		}
+		if (daumWin.daum?.roughmap?.cdn) {
+			loadLanderScript();
+			return;
+		}
+
+		const loaderId = 'daum-roughmap-loader';
+		const existingLoader = document.getElementById(loaderId);
+		if (existingLoader) {
+			existingLoader.addEventListener('load', loadLanderScript);
+			return;
+		}
+		const loaderScript = document.createElement('script');
+		loaderScript.id = loaderId;
+		loaderScript.charset = 'UTF-8';
+		loaderScript.src = 'https://t1.kakaocdn.net/kakaomapweb/roughmap/loader/prod/roughmapLoader.js';
+		loaderScript.onload = loadLanderScript;
+		document.head.appendChild(loaderScript);
+	}
+
 	function closeIntro() {
+		audioEl?.play().catch(() => {});
 		if (!introOpen || introClosing) return;
 		introClosing = true;
 		setTimeout(() => {
@@ -138,7 +216,6 @@
 	});
 
 	onMount(() => {
-		daysTogether = Math.floor((Date.now() - RELATIONSHIP_START.getTime()) / 86400000);
 		tickCountdown();
 		const timer = setInterval(tickCountdown, 1000);
 		const introTimer = setTimeout(closeIntro, 3200);
@@ -149,10 +226,19 @@
 		);
 		document.querySelectorAll('.fi').forEach((el) => obs.observe(el));
 
+		loadDaumRoughmap();
+
+		// 브라우저 자동재생 정책으로 막힐 경우, 첫 사용자 조작 시 재생 시도
+		audioEl?.play().catch(() => {});
+		const retryPlay = () => audioEl?.play().catch(() => {});
+		const gestureEvents = ['click', 'touchstart', 'scroll', 'keydown'] as const;
+		gestureEvents.forEach((ev) => document.addEventListener(ev, retryPlay, { once: true }));
+
 		return () => {
 			clearInterval(timer);
 			clearTimeout(introTimer);
 			obs.disconnect();
+			gestureEvents.forEach((ev) => document.removeEventListener(ev, retryPlay));
 		};
 	});
 </script>
@@ -161,8 +247,22 @@
 	<title>{COUPLE.groom.name} ♥ {COUPLE.bride.name}</title>
 </svelte:head>
 
+<audio
+	bind:this={audioEl}
+	src="/bgm.mp3"
+	loop
+	preload="auto"
+	onplay={() => (musicPlaying = true)}
+	onpause={() => (musicPlaying = false)}
+></audio>
+<button class="bgm-btn" class:paused={!musicPlaying} onclick={toggleMusic} aria-label="배경음악 재생/정지">
+	<span class="bgm-note">♪</span>
+</button>
+
 {#if introOpen}
-	<div class="intro" class:closing={introClosing}>
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="intro" class:closing={introClosing} onclick={closeIntro}>
 		<img src={PHOTOS.cover} alt="" class="intro-img" />
 		<div class="intro-tint"></div>
 		<button class="intro-skip" onclick={closeIntro}>SKIP ↘</button>
@@ -192,10 +292,6 @@
 		<span class="lbl">INVITATION</span>
 		<p class="ko-title fi">초대의 글</p>
 		<p class="invite-body fi d1">{INVITATION_BODY}</p>
-		<p class="invite-verse fi d1">
-			"{INVITATION_VERSE.body}"
-			<span class="invite-verse-source">({INVITATION_VERSE.source})</span>
-		</p>
 		<hr class="hr-sm fi d1" />
 		<div class="family-rows fi d2">
 			<div class="family-row">
@@ -238,10 +334,6 @@
 		<p class="cd-caption fi d2">
 			{COUPLE.bride.name}, {COUPLE.groom.name}의 결혼식이 {dLeft.d}일 남았습니다.
 		</p>
-
-		<hr class="hr-sm fi d3" />
-		<p class="together-lbl fi d3">함께 보낸 소중한 날</p>
-		<p class="together-num fi d3">+{daysTogether}일</p>
 	</section>
 
 	<!-- 6. 풀스크린 포토 -->
@@ -254,6 +346,11 @@
 	<section class="sec loc-sec">
 		<span class="lbl">LOCATION</span>
 		<p class="ko-title fi">오시는 길</p>
+
+		<div
+			id={DAUM_ROUGHMAP.containerId}
+			class="root_daum_roughmap root_daum_roughmap_landing kakao-map fi"
+		></div>
 
 		<div class="loc-info fi d1">
 			<p class="hall-name">{VENUE.name}</p>
@@ -401,7 +498,7 @@
 
 	<ContactPopup bind:open={contactOpen} />
 	<GuestbookPopup bind:open={gbWriteOpen} onSubmit={addMsg} />
-	<GuestbookViewPopup bind:open={gbViewOpen} {msgs} onDelete={removeMsg} />
+	<GuestbookViewPopup bind:open={gbViewOpen} {msgs} loading={msgsLoading} onDelete={removeMsg} />
 </div>
 
 <style>
@@ -516,7 +613,7 @@
 	}
 	.cover-date { font-size: 13px; margin: 0 0 0.35rem; animation-delay: 0.9s; }
 	.cover-names { font-size: 1.4rem; letter-spacing: 0.06em; margin: 0; animation-delay: 1.3s; }
-	.cover-heart { color: var(--pink); margin: 0 0.4em; font-size: 0.85em; }
+	.cover-heart { color: var(--green); margin: 0 0.4em; font-size: 0.85em; }
 
 	@keyframes cover-img-in {
 		to { opacity: 1; transform: scale(1); }
@@ -529,11 +626,6 @@
 	.inv-sec { text-align: center; }
 	.ko-title { font-size: 20px; font-weight: 500; letter-spacing: 0.04em; margin: 0.5rem 0 1.6rem; }
 	.invite-body { font-size: 15px; line-height: 1.8; color: var(--sub); white-space: pre-line; }
-	.invite-verse {
-		font-size: 13px; line-height: 1.9; color: var(--sub); font-style: italic;
-		white-space: pre-line; margin: 1.6rem 0 0; padding: 0 0.5rem;
-	}
-	.invite-verse-source { font-size: 12px; color: var(--muted); font-style: normal; margin-top: 0.4rem; }
 	.family-rows { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.6rem; color: var(--sub); }
 	.family-row { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
 	.person-name { font-weight: 500; color: var(--text); }
@@ -559,15 +651,13 @@
 	.cal-cell.wd span {
 		display: inline-flex; align-items: center; justify-content: center;
 		width: clamp(1.7rem, 8vw, 2rem); height: clamp(1.7rem, 8vw, 2rem);
-		background: var(--pink); color: #fff; border-radius: 50%;
+		background: var(--yellow); color: var(--text); border-radius: 50%;
 	}
 	.countdown { display: flex; justify-content: center; gap: 1.4rem; margin: 1.6rem 0 0.8rem; }
 	.cd-item { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
 	.cd-num { font-size: 1.5rem; font-weight: 600; color: var(--text); }
 	.cd-lbl { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; }
 	.cd-caption { font-size: 13px; color: var(--sub); }
-	.together-lbl { font-size: 14px; color: var(--pink); margin-bottom: 0.3rem; }
-	.together-num { font-size: 1.2rem; font-weight: 500; }
 
 	/* Fullscreen */
 	.fullscreen { position: relative; aspect-ratio: 4 / 5; overflow: hidden; }
@@ -582,6 +672,10 @@
 
 	/* Location */
 	.loc-sec { text-align: center; }
+	.kakao-map {
+		width: 100%; aspect-ratio: 640 / 360; border-radius: 12px;
+		overflow: hidden; background: var(--bg2); margin-bottom: 1.4rem;
+	}
 	.loc-info { margin: 0 0 1.6rem; }
 	.hall-name { font-size: 18px; font-weight: 500; margin-bottom: 10px; }
 	.loc-detail { font-size: 14px; color: var(--sub); margin-bottom: 2px; }
@@ -646,7 +740,7 @@
 		padding: 0.32rem 0.7rem; border: 1px solid var(--line); background: transparent;
 		font-size: 12px; color: var(--text); cursor: pointer; border-radius: 6px;
 	}
-	.btn-ghost:hover { border-color: var(--pink); color: var(--pink); }
+	.btn-ghost:hover { border-color: var(--green); color: var(--green); }
 
 	/* Ending */
 	.ending-area { display: flex; flex-direction: column; align-items: center; padding-bottom: 3rem; }
@@ -667,4 +761,34 @@
 		background: #fff; color: var(--text); font-size: 14px; cursor: pointer; margin-bottom: 1rem;
 	}
 	.copyright { font-size: 12px; color: var(--muted); }
+
+	/* BGM 토글 버튼 */
+	.bgm-btn {
+		position: fixed;
+		bottom: 1.4rem;
+		right: max(1.2rem, calc(50% - 425px / 2 + 1.2rem));
+		z-index: 250;
+		width: 42px; height: 42px;
+		border-radius: 50%;
+		border: none;
+		background: rgba(0, 0, 0, 0.45);
+		color: #fff;
+		display: flex; align-items: center; justify-content: center;
+		font-size: 17px;
+		cursor: pointer;
+		backdrop-filter: blur(4px);
+	}
+	.bgm-note {
+		display: inline-block;
+		animation: bgm-spin 3.2s linear infinite;
+	}
+	.bgm-btn.paused .bgm-note {
+		animation-play-state: paused;
+	}
+	.bgm-btn.paused {
+		opacity: 0.55;
+	}
+	@keyframes bgm-spin {
+		to { transform: rotate(360deg); }
+	}
 </style>

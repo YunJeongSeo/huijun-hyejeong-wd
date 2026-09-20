@@ -4,8 +4,14 @@
 	let {
 		open = $bindable(),
 		msgs,
+		loading = false,
 		onDelete
-	}: { open: boolean; msgs: Msg[]; onDelete: (id: number) => Promise<void> } = $props();
+	}: {
+		open: boolean;
+		msgs: Msg[];
+		loading?: boolean;
+		onDelete: (id: number, password: string) => Promise<boolean>;
+	} = $props();
 
 	let closing = $state(false);
 
@@ -23,6 +29,13 @@
 			closing = false;
 		}, 250);
 	}
+
+	async function askAndDelete(id: number) {
+		const pw = window.prompt('작성 시 입력한 비밀번호를 입력해주세요');
+		if (pw === null) return;
+		const ok = await onDelete(id, pw.trim());
+		if (!ok) window.alert('비밀번호가 일치하지 않습니다.');
+	}
 </script>
 
 {#if open || closing}
@@ -37,7 +50,12 @@
 				<button class="close-btn" onclick={close} aria-label="닫기">✕</button>
 			</div>
 			<div class="list">
-				{#if msgs.length === 0}
+				{#if loading && msgs.length === 0}
+					<div class="loading">
+						<span class="spinner"></span>
+						<p>불러오는 중...</p>
+					</div>
+				{:else if msgs.length === 0}
 					<p class="empty">아직 남겨진 메시지가 없어요.</p>
 				{:else}
 					{#each msgs as m (m.id)}
@@ -47,7 +65,7 @@
 								<span class="msg-date">{m.date}</span>
 							</div>
 							<p class="msg-text">{m.text}</p>
-							<button class="del-btn" onclick={() => onDelete(m.id)}>삭제</button>
+							<button class="del-btn" onclick={() => askAndDelete(m.id)}>삭제</button>
 						</div>
 					{/each}
 				{/if}
@@ -83,6 +101,16 @@
 
 	.list { overflow-y: auto; }
 	.empty { font-size: 14px; color: var(--muted); text-align: center; padding: 2rem 0; }
+	.loading {
+		display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+		padding: 2.4rem 0; color: var(--muted); font-size: 13px;
+	}
+	.spinner {
+		width: 22px; height: 22px; border-radius: 50%;
+		border: 2px solid var(--line); border-top-color: var(--green);
+		animation: spin 0.7s linear infinite;
+	}
+	@keyframes spin { to { transform: rotate(360deg); } }
 	.msg-card { padding: 0.9rem 0; border-bottom: 1px solid var(--line); position: relative; }
 	.msg-card:last-child { border-bottom: none; }
 	.msg-head { display: flex; justify-content: space-between; margin-bottom: 0.3rem; }

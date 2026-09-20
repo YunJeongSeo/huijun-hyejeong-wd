@@ -2,11 +2,15 @@
 	let {
 		open = $bindable(),
 		onSubmit
-	}: { open: boolean; onSubmit: (name: string, text: string) => Promise<void> } = $props();
+	}: {
+		open: boolean;
+		onSubmit: (name: string, text: string, password: string) => Promise<void>;
+	} = $props();
 
 	let closing = $state(false);
 	let name = $state('');
 	let text = $state('');
+	let password = $state('');
 	let submitting = $state(false);
 
 	$effect(() => {
@@ -25,12 +29,13 @@
 	}
 
 	async function submit() {
-		if (!name.trim() || !text.trim() || submitting) return;
+		if (!name.trim() || !text.trim() || !password.trim() || submitting) return;
 		submitting = true;
-		await onSubmit(name.trim(), text.trim());
+		await onSubmit(name.trim(), text.trim(), password.trim());
 		submitting = false;
 		name = '';
 		text = '';
+		password = '';
 		close();
 	}
 </script>
@@ -49,7 +54,19 @@
 			<div class="form">
 				<input class="inp" placeholder="이름" bind:value={name} maxlength="20" />
 				<textarea class="inp textarea" placeholder="따뜻한 축하 메시지를 남겨주세요" bind:value={text} maxlength="300" rows="4"></textarea>
-				<button class="submit-btn" onclick={submit} disabled={submitting || !name.trim() || !text.trim()}>
+				<input
+					class="inp"
+					type="password"
+					inputmode="numeric"
+					placeholder="삭제 시 필요한 비밀번호 (숫자 4자리 권장)"
+					bind:value={password}
+					maxlength="10"
+				/>
+				<button
+					class="submit-btn"
+					onclick={submit}
+					disabled={submitting || !name.trim() || !text.trim() || !password.trim()}
+				>
 					{submitting ? '등록 중...' : '등록하기'}
 				</button>
 			</div>
@@ -88,7 +105,7 @@
 		font-size: 15px; color: var(--text); outline: none;
 		border-radius: 8px; box-sizing: border-box;
 	}
-	.inp:focus { border-color: var(--pink); }
+	.inp:focus { border-color: var(--green); }
 	.textarea { resize: none; font-family: inherit; }
 	.submit-btn {
 		width: 100%; padding: 0.78rem; background: var(--text); color: #fff;

@@ -13,8 +13,8 @@ export const INVITATION_BODY =
 	'서로 다른 길을 걸어온 두 사람이 좋은 만남을 통해\n이제 한 가정을 이루려 합니다.\n서로를 아끼고 감사하는 마음으로 살아가고자 하오니\n귀한 걸음 하시어 축복해 주시면 감사하겠습니다.';
 
 export const INVITATION_VERSE = {
-	body: '한 사랑이면 짜라겠으랴와 두 사랑이면 능히 대적하나니\n세 겹줄은 쉽게 끊어지지 아니하느니라',
-	source: '전도서 4:12'
+	body: '장담하건대, 세상이 다 겨울이어도\n우리 사랑은 늘 봄처럼 따뜻하고\n간혹, 여름처럼 뜨거울 겁니다.',
+	source: '이수동, 사랑가'
 };
 
 export const VENUE = {
@@ -25,6 +25,13 @@ export const VENUE = {
 	naverMapUrl: 'https://map.naver.com/v5/search/부산동산교회',
 	tmapUrl: 'tmap://route?rGoName=부산동산교회',
 	kakaoNaviUrl: 'https://map.kakao.com/link/search/부산동산교회'
+};
+
+// 카카오맵 "지도 퍼가기(홈페이지에 담기)" 위젯 값
+export const DAUM_ROUGHMAP = {
+	containerId: 'daumRoughmapContainer1789900187054',
+	timestamp: '1789900187054',
+	key: 'v2mh4vkyyjh'
 };
 
 export const TRANSIT = [
@@ -38,25 +45,13 @@ export const NOTICE = {
 };
 
 export const CONTACTS = {
-	groom: [
-		{ label: '신랑', name: COUPLE.groom.name, tel: '010-0000-0000' },
-		{ label: '혼주', name: COUPLE.groom.parent, tel: '010-0000-0000' }
-	],
-	bride: [
-		{ label: '신부', name: COUPLE.bride.name, tel: '010-0000-0000' },
-		{ label: '혼주', name: COUPLE.bride.parent, tel: '010-0000-0000' }
-	]
+	groom: [{ label: '신랑', name: COUPLE.groom.name, tel: '010-6547-6187' }],
+	bride: [{ label: '신부', name: COUPLE.bride.name, tel: '010-4482-4628' }]
 };
 
 export const ACCOUNTS = {
-	groom: [
-		{ label: `신랑 ${COUPLE.groom.name}`, bank: 'ㅇㅇ은행', num: '000-000-000000' },
-		{ label: `혼주 ${COUPLE.groom.parent}`, bank: 'ㅇㅇ은행', num: '000-000-000000' }
-	],
-	bride: [
-		{ label: `신부 ${COUPLE.bride.name}`, bank: 'ㅇㅇ은행', num: '000-000-000000' },
-		{ label: `혼주 ${COUPLE.bride.parent}`, bank: 'ㅇㅇ은행', num: '000-000-000000' }
-	]
+	groom: [{ label: `신랑 ${COUPLE.groom.name}`, bank: '부산은행', num: '112-2006-5734-08' }],
+	bride: [{ label: `신부 ${COUPLE.bride.name}`, bank: '카카오뱅크', num: '3333-24-9475003' }]
 };
 
 // ─── 사진 — 실제 사진으로 교체하세요 (static/ 에 넣고 경로만 바꾸면 됩니다) ───
@@ -81,6 +76,6 @@ export const INTRO_TITLE = 'TOGETHER\nFOREVER';
 export const FULLSCREEN_QUOTE = 'JOIN US\nAS WE BECOME ONE';
 
 export const CLOSING_QUOTE = {
-	body: '장담하건대, 세상이 다 겨울이어도\n우리 사랑은 늘 봄처럼 따뜻하고\n간혹, 여름처럼 뜨거울 겁니다.',
-	source: '이수동, 사랑가'
+	body: '한 사람이면 패하겠거니와 두 사람이면 맞설 수 있나니\n세 겹 줄은 쉽게 끊어지지 아니하느니라',
+	source: '전도서 4:12'
 };
