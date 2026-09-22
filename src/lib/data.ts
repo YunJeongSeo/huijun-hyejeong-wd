@@ -80,6 +80,7 @@ export const PHOTOS = {
 		'/gallery/gallery-02.jpg',
 		'/gallery/gallery-03.jpg',
 		'/gallery/gallery-05.jpg',
+		'/gallery/gallery-06.jpg',
 		'/gallery/gallery-07.jpg',
 		'/gallery/gallery-08.jpg',
 		'/gallery/gallery-09.jpg',
