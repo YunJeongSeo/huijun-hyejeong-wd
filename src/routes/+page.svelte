@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { slide } from 'svelte/transition';
+	import { slide, fly } from 'svelte/transition';
 	import { base } from '$app/paths';
 	import {
 		COUPLE,
@@ -10,6 +10,7 @@
 		VENUE,
 		TRANSIT,
 		NOTICE,
+		MEAL_NOTICE,
 		ACCOUNTS,
 		PHOTOS,
 		INTRO_TITLE,
@@ -29,8 +30,15 @@
 	let gbViewOpen = $state(false);
 	let groomOpen = $state(false);
 	let brideOpen = $state(false);
+	const GALLERY_PREVIEW = 6;
+	let galleryOpen = $state(false);
+
 	let lbOpen = $state(false);
 	let lbIdx = $state(0);
+	let lbDir = $state(1);
+	let touchStartX = 0;
+	let touchStartY = 0;
+	let touchMulti = false;
 
 	let audioEl: HTMLAudioElement | undefined = $state();
 	let musicPlaying = $state(false);
@@ -118,10 +126,26 @@
 		lbOpen = true;
 	}
 	function lbPrev() {
+		lbDir = -1;
 		lbIdx = (lbIdx - 1 + PHOTOS.gallery.length) % PHOTOS.gallery.length;
 	}
 	function lbNext() {
+		lbDir = 1;
 		lbIdx = (lbIdx + 1) % PHOTOS.gallery.length;
+	}
+	function lbTouchStart(e: TouchEvent) {
+		touchMulti = e.touches.length > 1;
+		touchStartX = e.touches[0].clientX;
+		touchStartY = e.touches[0].clientY;
+	}
+	function lbTouchEnd(e: TouchEvent) {
+		if (touchMulti) return;
+		const dx = e.changedTouches[0].clientX - touchStartX;
+		const dy = e.changedTouches[0].clientY - touchStartY;
+		if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+			if (dx < 0) lbNext();
+			else lbPrev();
+		}
 	}
 
 	async function shareInvite() {
@@ -144,7 +168,7 @@
 
 		const renderMap = () => {
 			const width = container.clientWidth || 320;
-			const height = Math.round(width * (360 / 640));
+			const height = Math.round(width * (4 / 5));
 			new daumWin.daum.roughmap.Lander({
 				timestamp: DAUM_ROUGHMAP.timestamp,
 				key: DAUM_ROUGHMAP.key,
@@ -264,7 +288,7 @@
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div class="intro" class:closing={introClosing} onclick={closeIntro}>
-		<img src={PHOTOS.cover} alt="" class="intro-img" />
+		<img src="{base}{PHOTOS.intro}" alt="" class="intro-img" />
 		<div class="intro-tint"></div>
 		<button class="intro-skip" onclick={closeIntro}>SKIP ↘</button>
 		<div class="intro-content">
@@ -280,7 +304,7 @@
 <div class="wrap">
 	<!-- 1. COVER -->
 	<section class="cover">
-		<img src={PHOTOS.cover} alt="커버 사진" class="cover-img" />
+		<img src="{base}{PHOTOS.cover}" alt="커버 사진" class="cover-img" />
 		<div class="cover-overlay">
 			<p class="cover-overline">Wedding Invitation</p>
 			<p class="cover-date">{WEDDING_DATE_DISPLAY}</p>
@@ -339,8 +363,8 @@
 
 	<!-- 6. 풀스크린 포토 -->
 	<section class="fullscreen">
-		<img src={PHOTOS.fullscreen} alt="포토" class="fullscreen-img" />
-		<p class="fullscreen-quote">{FULLSCREEN_QUOTE}</p>
+		<img src="{base}{PHOTOS.fullscreen}" alt="포토" class="fullscreen-img" />
+		<p class="fullscreen-quote fi d1">{FULLSCREEN_QUOTE}</p>
 	</section>
 
 	<!-- 7. LOCATION -->
@@ -379,10 +403,17 @@
 	</section>
 
 	<!-- 8. NOTICE -->
-	<section class="sec" style="text-align: center">
+	<section class="sec" style="text-align: center; display: none">
 		<span class="lbl">NOTICE</span>
 		<p class="ko-title fi">{NOTICE.title}</p>
 		<p class="invite-body fi d1">{NOTICE.body}</p>
+	</section>
+
+	<!-- 8-1. 식사 안내 -->
+	<section class="sec" style="text-align: center">
+		<span class="lbl">MEAL</span>
+		<p class="ko-title fi">{MEAL_NOTICE.title}</p>
+		<p class="invite-body fi d1">{MEAL_NOTICE.body}</p>
 	</section>
 
 	<!-- 9. GALLERY -->
@@ -390,23 +421,50 @@
 		<span class="lbl">GALLERY</span>
 		<p class="ko-title fi">웨딩 갤러리</p>
 		<div class="gall-grid fi d1">
-			{#each PHOTOS.gallery as src, i}
+			{#each PHOTOS.gallery.slice(0, GALLERY_PREVIEW) as src, i}
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
-				<div class="gall-item" style="background-image: url('{src}')" onclick={() => openLb(i)}></div>
+				<div class="gall-item" style="background-image: url('{base}{src}')" onclick={() => openLb(i)}></div>
 			{/each}
 		</div>
+
+		{#if galleryOpen}
+			<div class="gall-grid gall-grid-more" transition:slide={{ duration: 320 }}>
+				{#each PHOTOS.gallery.slice(GALLERY_PREVIEW) as src, i}
+					<!-- svelte-ignore a11y_click_events_have_key_events -->
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
+					<div
+						class="gall-item"
+						style="background-image: url('{base}{src}')"
+						onclick={() => openLb(i + GALLERY_PREVIEW)}
+					></div>
+				{/each}
+			</div>
+		{/if}
+
+		{#if PHOTOS.gallery.length > GALLERY_PREVIEW}
+			<button class="gall-more-btn fi d2" onclick={() => (galleryOpen = !galleryOpen)}>
+				{galleryOpen ? '접기 ▴' : `사진 더보기 (${PHOTOS.gallery.length - GALLERY_PREVIEW}) ▾`}
+			</button>
+		{/if}
 	</section>
 
 	{#if lbOpen}
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div class="lb-ov" onclick={() => (lbOpen = false)}>
+		<div class="lb-ov" onclick={() => (lbOpen = false)} ontouchstart={lbTouchStart} ontouchend={lbTouchEnd}>
 			<button class="lb-close" onclick={() => (lbOpen = false)}>✕</button>
 			<!-- svelte-ignore a11y_click_events_have_key_events -->
 			<!-- svelte-ignore a11y_no_static_element_interactions -->
 			<div class="lb-img-wrap" onclick={(e) => e.stopPropagation()}>
-				<img src={PHOTOS.gallery[lbIdx]} alt="갤러리 사진 {lbIdx + 1}" />
+				{#key lbIdx}
+					<img
+						src="{base}{PHOTOS.gallery[lbIdx]}"
+						alt="갤러리 사진 {lbIdx + 1}"
+						in:fly={{ x: lbDir * 90, duration: 280, opacity: 0.4 }}
+						out:fly={{ x: -lbDir * 90, duration: 280, opacity: 0.4 }}
+					/>
+				{/key}
 			</div>
 			<button class="lb-arr lb-prev" onclick={(e) => { e.stopPropagation(); lbPrev(); }}>‹</button>
 			<button class="lb-arr lb-next" onclick={(e) => { e.stopPropagation(); lbNext(); }}>›</button>
@@ -477,7 +535,7 @@
 	<!-- 14. 클로징 -->
 	<div class="ending-area">
 		<div class="ending-photo">
-			<img src={PHOTOS.ending} alt="엔딩 사진" />
+			<img src="{base}{PHOTOS.ending}" alt="엔딩 사진" />
 			<div class="ending-overlay">
 				<p class="ending-quote">{CLOSING_QUOTE.body}</p>
 				<p class="ending-source">{CLOSING_QUOTE.source}</p>
@@ -524,6 +582,7 @@
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
+		object-position: 30% center;
 		filter: grayscale(0.15) brightness(0.82);
 		transform: scale(1.06);
 		animation: intro-img-pan 4s ease-out forwards;
@@ -584,9 +643,10 @@
 	}
 
 	/* Cover — 입장 애니메이션 */
-	.cover { position: relative; aspect-ratio: 4 / 5; overflow: hidden; background: #ddd; }
+	.cover { position: relative; aspect-ratio: 3 / 4; overflow: hidden; background: #ddd; }
 	.cover-img {
 		width: 100%; height: 100%; object-fit: cover;
+		object-position: center;
 		opacity: 0; transform: scale(1.08);
 		animation: cover-img-in 1.8s ease forwards;
 	}
@@ -661,20 +721,31 @@
 	.cd-caption { font-size: 13px; color: var(--sub); }
 
 	/* Fullscreen */
-	.fullscreen { position: relative; aspect-ratio: 4 / 5; overflow: hidden; }
+	.fullscreen { position: relative; aspect-ratio: 3 / 2; overflow: hidden; }
 	.fullscreen-img { width: 100%; height: 100%; object-fit: cover; }
 	.fullscreen-quote {
-		position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-		text-align: center; white-space: pre-line;
-		font-family: 'Crimson Pro', serif; font-size: clamp(1.6rem, 8vw, 2.2rem);
-		letter-spacing: 0.06em; color: #fff; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
-		margin: 0; padding: 2rem;
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: flex-end;
+		white-space: pre-line;
+		font-family: 'Crimson Pro', serif;
+		font-size: clamp(1.6rem, 8vw, 2.2rem);
+		letter-spacing: 0.06em;
+		color: #fff;
+		text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+		margin: 0;
+		padding: 0.8rem 1.4rem;
+		line-height: 1.1;
 	}
 
 	/* Location */
 	.loc-sec { text-align: center; }
 	.kakao-map {
-		width: 100%; aspect-ratio: 640 / 360; border-radius: 12px;
+		width: calc(100% + var(--sec-pad-x) * 2);
+		margin-left: calc(-1 * var(--sec-pad-x));
+		margin-right: calc(-1 * var(--sec-pad-x));
+		aspect-ratio: 5 / 4;
 		overflow: hidden; background: var(--bg2); margin-bottom: 1.4rem;
 	}
 	.loc-info { margin: 0 0 1.6rem; }
@@ -700,12 +771,28 @@
 	/* Gallery */
 	.gall-sec { text-align: center; }
 	.gall-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px; margin-top: 1.6rem; }
+	.gall-grid-more { margin-top: 3px; overflow: hidden; }
 	.gall-item { aspect-ratio: 3 / 4; background-size: cover; background-position: center; cursor: pointer; }
-	.lb-ov {
-		position: fixed; inset: 0; background: rgba(0, 0, 0, 0.94); z-index: 200;
-		display: flex; align-items: center; justify-content: center;
+	.gall-more-btn {
+		margin-top: 1.4rem; padding: 0.6rem 1.4rem;
+		border: 1px solid var(--line); border-radius: 20px; background: #fff;
+		color: var(--sub); font-size: 13px; letter-spacing: 0.04em; cursor: pointer;
 	}
-	.lb-img-wrap img { max-width: 90vw; max-height: 90vh; display: block; }
+	.gall-more-btn:hover { background: var(--bg2); }
+	.lb-ov {
+		position: fixed; inset: 0; background: rgba(0, 0, 0, 0.94); z-index: 260;
+		display: flex; align-items: center; justify-content: center;
+		touch-action: none;
+	}
+	.lb-img-wrap {
+		position: relative;
+		width: 90vw; height: 90vh;
+	}
+	.lb-img-wrap img {
+		position: absolute;
+		inset: 0; margin: auto;
+		max-width: 90vw; max-height: 90vh; display: block;
+	}
 	.lb-close { position: absolute; top: 1rem; right: 1rem; color: rgba(255, 255, 255, 0.7); font-size: 1.6rem; background: none; border: none; cursor: pointer; }
 	.lb-arr { position: absolute; top: 50%; transform: translateY(-50%); background: none; border: none; color: rgba(255, 255, 255, 0.6); font-size: 2.4rem; cursor: pointer; padding: 1rem; }
 	.lb-prev { left: 0; }
@@ -750,7 +837,7 @@
 	.ending-overlay {
 		position: absolute; inset: 0; display: flex; flex-direction: column;
 		align-items: center; justify-content: center; text-align: center; padding: 2rem;
-		background: rgba(0, 0, 0, 0.35); color: #fff;
+		background: rgba(0, 0, 0, 0.45); color: #fff;
 	}
 	.ending-quote { font-size: 15px; line-height: 2; white-space: pre-line; margin: 0 0 0.6rem; }
 	.ending-source { font-size: 13px; color: #ccc; margin: 0; }
