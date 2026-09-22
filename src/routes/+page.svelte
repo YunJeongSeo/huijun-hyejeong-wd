@@ -687,8 +687,18 @@
 	.inv-sec { text-align: center; }
 	.ko-title { font-size: 20px; font-weight: 500; letter-spacing: 0.04em; margin: 0.5rem 0 1.6rem; }
 	.invite-body { font-size: 15px; line-height: 1.8; color: var(--sub); white-space: pre-line; }
-	.family-rows { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.6rem; color: var(--sub); }
-	.family-row { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+	.family-rows {
+		display: grid;
+		grid-template-columns: auto auto auto;
+		justify-content: center;
+		align-items: baseline;
+		column-gap: 8px;
+		row-gap: 0.5rem;
+		margin-bottom: 1.6rem;
+		color: var(--sub);
+	}
+	.family-row { display: contents; }
+	.family-row .person-name:first-child { text-align: right; }
 	.person-name { font-weight: 500; color: var(--text); }
 	.btn-contact {
 		width: 200px; padding: 0.7rem; margin: 0 auto; display: block;
@@ -698,7 +708,7 @@
 	.btn-contact:hover { background: var(--bg2); }
 
 	/* Calendar / countdown */
-	.dt-main { font-size: 17px; font-weight: 500; margin: 0 0 1.4rem; }
+	.dt-main { font-size: 17px; font-weight: 800; margin: 0 0 1.4rem; }
 	.cal-grid {
 		display: grid; grid-template-columns: repeat(7, 1fr);
 		align-items: center; justify-items: center;
@@ -713,10 +723,11 @@
 		display: inline-flex; align-items: center; justify-content: center;
 		width: clamp(1.7rem, 8vw, 2rem); height: clamp(1.7rem, 8vw, 2rem);
 		background: var(--yellow); color: var(--text); border-radius: 50%;
+		font-weight: bold;
 	}
 	.countdown { display: flex; justify-content: center; gap: 1.4rem; margin: 1.6rem 0 0.8rem; }
 	.cd-item { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
-	.cd-num { font-size: 1.5rem; font-weight: 600; color: var(--text); }
+	.cd-num { font-size: 1.2rem; font-weight: 600; color: #424242; }
 	.cd-lbl { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; }
 	.cd-caption { font-size: 13px; color: var(--sub); }
 
@@ -839,7 +850,7 @@
 		align-items: center; justify-content: center; text-align: center; padding: 2rem;
 		background: rgba(0, 0, 0, 0.45); color: #fff;
 	}
-	.ending-quote { font-size: 15px; line-height: 2; white-space: pre-line; margin: 0 0 0.6rem; }
+	.ending-quote { font-size: 15px; line-height: 2; white-space: pre-line; margin: 280px 0 0.6rem; }
 	.ending-source { font-size: 13px; color: #ccc; margin: 0; }
 	.save-table { width: 100%; max-width: 320px; margin: 2rem auto 1.6rem; border-collapse: collapse; }
 	.save-table th, .save-table td { padding: 0.6rem 0.4rem; border-bottom: 1px solid var(--line); font-size: 13px; text-align: left; }
