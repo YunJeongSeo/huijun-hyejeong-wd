@@ -1,6 +1,6 @@
 // ─── 결혼식 정보 ─────────────────────────
 export const COUPLE = {
-	groom: { name: '최희준', parent: '최상봉 · 장동숙(지영)', relation: '장남' },
+	groom: { name: '최희준', parent: '故최상봉 · 장동숙(지영)', relation: '장남' },
 	bride: { name: '안혜정', parent: '양진례', relation: '차녀' }
 };
 
@@ -80,9 +80,9 @@ export const PHOTOS = {
 		'/gallery/gallery-02.jpg',
 		'/gallery/gallery-03.jpg',
 		'/gallery/gallery-05.jpg',
-		'/gallery/gallery-06.jpg',
+		'/gallery/gallery-19.jpg',
 		'/gallery/gallery-07.jpg',
-		'/gallery/gallery-08.jpg',
+		'/gallery/gallery-20.jpg',
 		'/gallery/gallery-09.jpg',
 		'/gallery/gallery-11.jpg',
 		'/gallery/gallery-12.jpg',
